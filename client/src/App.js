@@ -1,36 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 
+import FilmListesi from './Filmler/FilmListesi';
+import Film from './Filmler/Film';
 import KaydedilenlerListesi from './Filmler/KaydedilenlerListesi';
 
-export default function App () {
-  const [saved, setSaved] = useState([]); // Stretch: the ids of "saved" movies
+export default function App() {
   const [movieList, setMovieList] = useState([]);
+  const [saved, setSaved] = useState([]);
 
   useEffect(() => {
-    const FilmleriAl = () => {
+    const fetchFilms = () => {
       axios
-        .get('http://localhost:5001/api/filmler') // Burayı Postman'le çalışın
+        .get('http://localhost:5001/api/filmler')
         .then(response => {
-          // Bu kısmı log statementlarıyla çalışın
-          // ve burdan gelen response'u 'movieList' e aktarın
+          setMovieList(response.data);
         })
         .catch(error => {
           console.error('Sunucu Hatası', error);
         });
     }
-    FilmleriAl();
+    fetchFilms();
   }, []);
 
-  const KaydedilenlerListesineEkle = id => {
-    // Burası esnek. Aynı filmin birden fazla kez "saved" e eklenmesini engelleyin
+  const addToSavedList = id => {
+    if (!saved.includes(id)) {
+      setSaved([...saved, id]);
+    }
   };
 
   return (
-    <div>
-      <KaydedilenlerListesi list={[ /* Burası esnek */]} />
+    <Router>
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Ana Sayfa</Link>
+            </li>
+            <li>
+              <Link to="/kaydedilenler">Kaydedilen Filmler</Link>
+            </li>
+          </ul>
+        </nav>
 
-      <div>Bu Div'i kendi Routelarınızla değiştirin</div>
-    </div>
+        <Switch>
+          <Route exact path="/">
+            <FilmListesi movies={movieList} />
+          </Route>
+          <Route path="/filmler/:id">
+            <Film addToSavedList={addToSavedList} />
+          </Route>
+          <Route path="/kaydedilenler">
+            <KaydedilenlerListesi list={saved} />
+          </Route>
+        </Switch>
+      </div>
+    </Router>
   );
 }
